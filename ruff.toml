@@ -1,0 +1,3 @@
+[lint]
+ignore = ["F722"]
+extend-select = ["I"]

@@ -1,0 +1,2 @@
+gradio==4.31.4
+gradio-litmodel3d==0.0.1

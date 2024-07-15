@@ -1,0 +1,12 @@
+einops==0.7.0
+jaxtyping==0.2.31
+omegaconf==2.3.0
+transformers==4.42.3
+slangtorch==1.2.2
+open_clip_torch==2.24.0
+trimesh==4.4.1
+numpy==1.26.4
+huggingface-hub==0.23.4
+rembg[gpu]==2.0.57
+git+https://github.com/vork/PyNanoInstantMeshes.git
+gpytoolbox==0.2.0
