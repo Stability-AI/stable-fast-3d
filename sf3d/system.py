@@ -309,6 +309,11 @@ class SF3D(BaseModule):
 
                 rets = []
                 for i, mesh in enumerate(meshes):
+                    # Check for empty mesh
+                    if mesh.v_pos.shape[0] == 0:
+                        rets.append(trimesh.Trimesh())
+                        continue
+
                     if remesh == "triangle":
                         mesh = mesh.triangle_remesh()
                     elif remesh == "quad":
