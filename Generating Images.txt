@@ -1,0 +1,135 @@
+To generate 3D images using the library you’ve described, you'll need to follow a structured approach from setting up the environment to running the code. Here's a step-by-step guide:
+
+### 1. **Setup Your Environment**
+
+1. **Install Required Libraries:**
+   Make sure you have Python and the required libraries installed. You’ll need `torch`, `einops`, `jaxtyping`, `numpy`, `PIL`, and any other dependencies specific to your environment.
+
+   You can install them using pip:
+
+   ```bash
+   pip install torch einops jaxtyping numpy pillow
+   ```
+
+2. **Set Up Your GitHub Repository:**
+   Clone the GitHub repository containing the library code.
+
+   ```bash
+   git clone <repository-url>
+   cd <repository-folder>
+   ```
+
+3. **Install Additional Dependencies:**
+   If your repository includes a `requirements.txt` or `environment.yml`, install the dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### 2. **Understand the Library Structure**
+
+1. **Identify Key Components:**
+   - `TriplaneLearnablePositionalEmbedding`
+   - `Modulation`
+   - `GEGLU`
+   - `CrossAttention`
+   - `FeedForward`
+   - `BasicBlock`
+   - `SingleStreamTransformer`
+   - `FuseBlock`
+   - `TriplaneAttention`
+   - `TwoStreamBlock`
+   - `TwoStreamInterleaveTransformer`
+
+2. **Review Initialization:**
+   Check how these components are initialized and configured. Look for a main entry point or script that starts the generation process.
+
+### 3. **Prepare Data**
+
+1. **Input Data:**
+   Prepare the input images or any other data required by the models. Ensure that the data format and size are compatible with the library’s requirements.
+
+2. **Preprocessing:**
+   Use any provided preprocessing scripts or functions to convert your data into the required format. For example, resizing images or normalizing them.
+
+### 4. **Run the Generation Process**
+
+1. **Initialize the Model:**
+   Create instances of the required model classes with appropriate configurations. For example:
+
+   ```python
+   from sf3d.models import TwoStreamInterleaveTransformer
+
+   config = TwoStreamInterleaveTransformer.Config(
+       num_attention_heads=16,
+       attention_head_dim=64,
+       raw_triplane_channels=1024,
+       triplane_channels=1024,
+       raw_image_channels=1024,
+       num_latents=1792,
+       num_blocks=4,
+       num_basic_blocks=3,
+       dropout=0.0,
+       latent_init_std=0.02,
+       norm_num_groups=32,
+       attention_bias=False,
+       norm_x_input=False,
+       cross_attention_dim=1024,
+       mix_latent=True
+   )
+
+   model = TwoStreamInterleaveTransformer(config)
+   ```
+
+2. **Load Pre-trained Weights (if applicable):**
+   If you have pre-trained weights, load them into the model.
+
+   ```python
+   model.load_state_dict(torch.load('path_to_weights.pth'))
+   ```
+
+3. **Run Inference:**
+   Pass the prepared data through the model to generate 3D images.
+
+   ```python
+   # Prepare your data
+   hidden_states = torch.randn(batch_size, triplane_dim, N_triplane)  # Example tensor
+   encoder_hidden_states = torch.randn(batch_size, N_image, image_dim)  # Example tensor
+
+   # Generate 3D images
+   with torch.no_grad():
+       output = model(hidden_states, encoder_hidden_states)
+   ```
+
+### 5. **Postprocessing**
+
+1. **Extract and Save Results:**
+   Post-process the output to visualize or save the generated 3D images. This might include reshaping tensors, converting to images, or saving to files.
+
+   ```python
+   from PIL import Image
+
+   # Convert tensor to image and save
+   output_image = output[0].cpu().numpy().transpose(1, 2, 0)  # Example conversion
+   image = Image.fromarray((output_image * 255).astype('uint8'))
+   image.save('output_image.png')
+   ```
+
+2. **Visualize Results:**
+   Use visualization tools or libraries to inspect the generated 3D images.
+
+### 6. **Debugging and Optimization**
+
+1. **Verify Results:**
+   Check if the output is as expected. If not, verify the data preparation, model configuration, and inference process.
+
+2. **Optimize Performance:**
+   Depending on your hardware, you might need to optimize for performance, such as using GPU acceleration.
+
+### 7. **Documentation and Testing**
+
+1. **Document Your Process:**
+   Keep detailed notes on how you set up and ran the models. This will help with future reproductions or debugging.
+
+2. **Run Tests:**
+   If the library includes tests, run them to ensure everything is functioning correctly.
