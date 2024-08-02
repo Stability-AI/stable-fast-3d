@@ -56,7 +56,7 @@ def resize_foreground(
 ) -> Image:
     image = np.array(image)
     assert image.shape[-1] == 4
-    alpha = np.where(image[..., 3] > 0)
+    alpha = np.where(image[..., 3] > 0.5)
     y1, y2, x1, x2 = (
         alpha[0].min(),
         alpha[0].max(),

@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass, field
-from typing import Any, List, Literal, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -235,11 +235,53 @@ class SF3D(BaseModule):
 
     def run_image(
         self,
-        image: Image,
+        image: Union[Image.Image, List[Image.Image]],
         bake_resolution: int,
         remesh: Literal["none", "triangle", "quad"] = "none",
         estimate_illumination: bool = False,
-    ) -> Tuple[trimesh.Trimesh, dict[str, Any]]:
+    ) -> Tuple[Union[trimesh.Trimesh, List[trimesh.Trimesh]], dict[str, Any]]:
+        if isinstance(image, list):
+            rgb_cond = []
+            mask_cond = []
+            for img in image:
+                mask, rgb = self.prepare_image(img)
+                mask_cond.append(mask)
+                rgb_cond.append(rgb)
+            rgb_cond = torch.stack(rgb_cond, 0)
+            mask_cond = torch.stack(mask_cond, 0)
+            batch_size = rgb_cond.shape[0]
+        else:
+            mask_cond, rgb_cond = self.prepare_image(image)
+            batch_size = 1
+
+        c2w_cond = default_cond_c2w(self.cfg.default_distance).to(self.device)
+        intrinsic, intrinsic_normed_cond = create_intrinsic_from_fov_deg(
+            self.cfg.default_fovy_deg,
+            self.cfg.cond_image_size,
+            self.cfg.cond_image_size,
+        )
+
+        batch = {
+            "rgb_cond": rgb_cond,
+            "mask_cond": mask_cond,
+            "c2w_cond": c2w_cond.view(1, 1, 4, 4).repeat(batch_size, 1, 1, 1),
+            "intrinsic_cond": intrinsic.to(self.device)
+            .view(1, 1, 3, 3)
+            .repeat(batch_size, 1, 1, 1),
+            "intrinsic_normed_cond": intrinsic_normed_cond.to(self.device)
+            .view(1, 1, 3, 3)
+            .repeat(batch_size, 1, 1, 1),
+        }
+
+        meshes, global_dict = self.generate_mesh(
+            batch, bake_resolution, remesh, estimate_illumination
+        )
+        if batch_size == 1:
+            return meshes[0], global_dict
+        else:
+            return meshes, global_dict
+
+    def prepare_image(self, image):
         if image.mode != "RGBA":
             raise ValueError("Image must be in RGBA mode")
         img_cond = (
@@ -260,25 +302,7 @@ class SF3D(BaseModule):
             mask_cond,
         )
 
-        c2w_cond = default_cond_c2w(self.cfg.default_distance).to(self.device)
-        intrinsic, intrinsic_normed_cond = create_intrinsic_from_fov_deg(
-            self.cfg.default_fovy_deg,
-            self.cfg.cond_image_size,
-            self.cfg.cond_image_size,
-        )
-
-        batch = {
-            "rgb_cond": rgb_cond,
-            "mask_cond": mask_cond,
-            "c2w_cond": c2w_cond.unsqueeze(0),
-            "intrinsic_cond": intrinsic.to(self.device).unsqueeze(0),
-            "intrinsic_normed_cond": intrinsic_normed_cond.to(self.device).unsqueeze(0),
-        }
-
-        meshes, global_dict = self.generate_mesh(
-            batch, bake_resolution, remesh, estimate_illumination
-        )
-        return meshes[0], global_dict
+        return mask_cond, rgb_cond
 
     def generate_mesh(
         self,

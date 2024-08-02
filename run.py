@@ -11,7 +11,9 @@ from sf3d.utils import remove_background, resize_foreground
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("image", type=str, nargs="+", help="Path to input image(s).")
+    parser.add_argument(
+        "image", type=str, nargs="+", help="Path to input image(s) or folder."
+    )
     parser.add_argument(
         "--device",
         default="cuda:0",
@@ -48,6 +50,9 @@ if __name__ == "__main__":
         default="none",
         help="Remeshing option",
     )
+    parser.add_argument(
+        "--batch_size", default=1, type=int, help="Batch size for inference"
+    )
     args = parser.parse_args()
 
     # Ensure args.device contains cuda
@@ -73,15 +78,33 @@ if __name__ == "__main__":
 
     rembg_session = rembg.new_session()
     images = []
-    for i, image_path in enumerate(args.image):
-        image = remove_background(Image.open(image_path).convert("RGBA"), rembg_session)
-        image = resize_foreground(image, args.foreground_ratio)
-        if not os.path.exists(os.path.join(output_dir, str(i))):
-            os.makedirs(os.path.join(output_dir, str(i)))
-        image.save(os.path.join(output_dir, str(i), "input.png"))
-        images.append(image)
+    idx = 0
+    for image_path in args.image:
 
-    for i, image in tqdm(enumerate(images)):
+        def handle_image(image_path, idx):
+            image = remove_background(
+                Image.open(image_path).convert("RGBA"), rembg_session
+            )
+            image = resize_foreground(image, args.foreground_ratio)
+            os.makedirs(os.path.join(output_dir, str(idx)), exist_ok=True)
+            image.save(os.path.join(output_dir, str(idx), "input.png"))
+            images.append(image)
+
+        if os.path.isdir(image_path):
+            image_paths = [
+                os.path.join(image_path, f)
+                for f in os.listdir(image_path)
+                if f.endswith((".png", ".jpg", ".jpeg"))
+            ]
+            for image_path in image_paths:
+                handle_image(image_path, idx)
+                idx += 1
+        else:
+            handle_image(image_path, idx)
+            idx += 1
+
+    for i in tqdm(range(0, len(images), args.batch_size)):
+        image = images[i : i + args.batch_size]
         torch.cuda.reset_peak_memory_stats()
         with torch.no_grad():
             with torch.autocast(device_type="cuda", dtype=torch.float16):
@@ -92,5 +115,10 @@ if __name__ == "__main__":
                 )
         print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
 
-        out_mesh_path = os.path.join(output_dir, str(i), "mesh.glb")
-        mesh.export(out_mesh_path, include_normals=True)
+        if len(image) == 1:
+            out_mesh_path = os.path.join(output_dir, str(i), "mesh.glb")
+            mesh.export(out_mesh_path, include_normals=True)
+        else:
+            for j in range(len(mesh)):
+                out_mesh_path = os.path.join(output_dir, str(i + j), "mesh.glb")
+                mesh[j].export(out_mesh_path, include_normals=True)
