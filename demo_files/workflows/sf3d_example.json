@@ -1,0 +1,254 @@
+{
+  "last_node_id": 10,
+  "last_link_id": 12,
+  "nodes": [
+    {
+      "id": 8,
+      "type": "StableFast3DSampler",
+      "pos": [
+        756.9950672198843,
+        9.735666739723854
+      ],
+      "size": {
+        "0": 315,
+        "1": 166
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "SF3D_MODEL",
+          "link": 8
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 10,
+          "slot_index": 1
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 11
+        },
+        {
+          "name": "remesh",
+          "type": "none",
+          "link": null,
+          "slot_index": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StableFast3DSampler"
+      },
+      "widgets_values": [
+        0.85,
+        1024,
+        "triangle"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "StableFast3DSave",
+      "pos": [
+        1116,
+        8
+      ],
+      "size": [
+        600,
+        512
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 9
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StableFast3DSave"
+      },
+      "widgets_values": [
+        "SF3D",
+        null
+      ]
+    },
+    {
+      "id": 6,
+      "type": "InvertMask",
+      "pos": [
+        485,
+        132
+      ],
+      "size": {
+        "0": 210,
+        "1": 26
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            11
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "InvertMask"
+      }
+    },
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        105,
+        26
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            10
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            6
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "axe (1).png",
+        "image"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "StableFast3DLoader",
+      "pos": [
+        478,
+        -27
+      ],
+      "size": {
+        "0": 210,
+        "1": 26
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "sf3d_model",
+          "type": "SF3D_MODEL",
+          "links": [
+            8
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "StableFast3DLoader"
+      }
+    }
+  ],
+  "links": [
+    [
+      6,
+      1,
+      1,
+      6,
+      0,
+      "MASK"
+    ],
+    [
+      8,
+      7,
+      0,
+      8,
+      0,
+      "SF3D_MODEL"
+    ],
+    [
+      9,
+      8,
+      0,
+      9,
+      0,
+      "MESH"
+    ],
+    [
+      10,
+      1,
+      0,
+      8,
+      1,
+      "IMAGE"
+    ],
+    [
+      11,
+      6,
+      0,
+      8,
+      2,
+      "MASK"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6209213230591552,
+      "offset": [
+        80.89139921077967,
+        610.3296066172098
+      ]
+    }
+  },
+  "version": 0.4
+}

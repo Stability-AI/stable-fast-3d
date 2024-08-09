@@ -52,6 +52,26 @@ For detailed usage of this script, use `python run.py --help`.
 python gradio_app.py
 ```
 
+
+## ComfyUI extension
+
+Custom nodes and an [example workflow](./demo_files/workflows/sf3d_example.json) are provided for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
+
+To install:
+
+* Clone this repo into ```custom_nodes```:
+  ```shell
+  $ cd ComfyUI/custom_nodes
+  $ git clone https://github.com/Stability-AI/stable-fast-3d
+  ```
+* Install dependencies:
+  ```shell
+  $ cd sf3d_code_release
+  $ pip install -r requirements.txt
+  ```
+* Restart ComfyUI
+
+
 ## Citation
 ```BibTeX
 @article{sf3d2024,
