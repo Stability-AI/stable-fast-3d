@@ -28,8 +28,7 @@ from sf3d.models.utils import (
     scale_tensor,
 )
 from sf3d.utils import create_intrinsic_from_fov_deg, default_cond_c2w
-
-from .texture_baker import TextureBaker
+from texture_baker import TextureBaker
 
 
 class SF3D(BaseModule):
@@ -355,7 +354,6 @@ class SF3D(BaseModule):
                         mesh.v_pos,
                         rast,
                         mesh.t_pos_idx,
-                        mesh.v_tex,
                     )
                     gb_pos = pos_bake[bake_mask]
 
@@ -368,7 +366,6 @@ class SF3D(BaseModule):
                         mesh.v_nrm,
                         rast,
                         mesh.t_pos_idx,
-                        mesh.v_tex,
                     )
                     gb_nrm = F.normalize(nrm[bake_mask], dim=-1)
                     decoded["normal"] = gb_nrm
@@ -409,7 +406,6 @@ class SF3D(BaseModule):
                                     mesh.v_tng,
                                     rast,
                                     mesh.t_pos_idx,
-                                    mesh.v_tex,
                                 )
                                 gb_tng = tng[bake_mask]
                                 gb_tng = F.normalize(gb_tng, dim=-1)

@@ -2,7 +2,6 @@ einops==0.7.0
 jaxtyping==0.2.31
 omegaconf==2.3.0
 transformers==4.42.3
-slangtorch==1.2.2
 open_clip_torch==2.24.0
 trimesh==4.4.1
 numpy==1.26.4
