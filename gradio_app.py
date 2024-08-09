@@ -46,7 +46,12 @@ model = SF3D.from_pretrained(
     weight_name="model.safetensors",
 )
 model.eval()
-model = model.cuda()
+
+device = "cuda"
+if not torch.cuda.is_available():
+    device = "cpu"
+
+model.to(device)
 
 example_files = [
     os.path.join("demo_files/examples", f) for f in os.listdir("demo_files/examples")
@@ -58,7 +63,7 @@ def run_model(input_image, remesh_option, texture_size):
     with torch.no_grad():
         with torch.autocast(device_type="cuda", dtype=torch.float16):
             model_batch = create_batch(input_image)
-            model_batch = {k: v.cuda() for k, v in model_batch.items()}
+            model_batch = {k: v.to(device) for k, v in model_batch.items()}
             trimesh_mesh, _glob_dict = model.generate_mesh(
                 model_batch, texture_size, remesh_option
             )
@@ -191,9 +196,11 @@ def run_button(
     texture_size,
 ):
     if run_btn == "Run":
-        torch.cuda.reset_peak_memory_stats()
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
         glb_file: str = run_model(background_state, remesh_option.lower(), texture_size)
-        print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
+        if torch.cuda.is_available():
+            print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
 
         return (
             gr.update(),
