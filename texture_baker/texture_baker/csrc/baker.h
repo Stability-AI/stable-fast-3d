@@ -1,18 +1,33 @@
 #pragma once
 
-#include <vector>
-#include <cmath>
-
 #if defined(__NVCC__) || defined(__HIPCC__) || defined(__METAL__)
 #define CUDA_ENABLED
+#ifndef __METAL__
 #define CUDA_HOST_DEVICE __host__ __device__
+#define CUDA_DEVICE __device__
+#define METAL_CONSTANT_MEM
+#define METAL_THREAD_MEM
+#else
+#define tb_float2 float2
+#define CUDA_HOST_DEVICE
+#define CUDA_DEVICE
+#define METAL_CONSTANT_MEM constant
+#define METAL_THREAD_MEM thread
+#endif
 #else
 #define CUDA_HOST_DEVICE
+#define CUDA_DEVICE
+#define METAL_CONSTANT_MEM
+#define METAL_THREAD_MEM
+#include <vector>
+#include <cfloat>
+#include <limits>
 #endif
 
 namespace texture_baker_cpp
 {
     // Structure to represent a 2D point or vector
+#ifndef __METAL__
     union alignas(8) tb_float2
     {
         struct
@@ -42,6 +57,30 @@ namespace texture_baker_cpp
         }
     };
 
+    union alignas(4) tb_float3
+    {
+        struct
+        {
+            float x, y, z;
+        };
+
+        float data[3];
+
+        float &operator[](size_t idx)
+        {
+            if(idx > 2)
+                throw std::runtime_error("bad index");
+            return data[idx];
+        }
+
+        const float &operator[](size_t idx) const
+        {
+            if(idx > 2)
+                throw std::runtime_error("bad index");
+            return data[idx];
+        }
+    };
+
     union alignas(16) tb_float4
     {
         struct
@@ -65,6 +104,7 @@ namespace texture_baker_cpp
             return data[idx];
         }
     };
+#endif
 
     union alignas(4) tb_int3
     {
@@ -74,22 +114,24 @@ namespace texture_baker_cpp
         };
 
         int data[3];
-
+#ifndef __METAL__
         int &operator[](size_t idx)
         {
             if(idx > 2)
                 throw std::runtime_error("bad index");
             return data[idx];
         }
+#endif
     };
 
     // BVH structure to accelerate point-triangle intersection
     struct alignas(16) AABB
     {
         // Init bounding boxes with max/min
-        tb_float2 min = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-        tb_float2 max = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
+        tb_float2 min = {FLT_MAX, FLT_MAX};
+        tb_float2 max = {FLT_MIN, FLT_MIN};
 
+#ifndef CUDA_ENABLED
         // grow the AABB to include a point
         void grow(const tb_float2 &p)
         {
@@ -101,28 +143,29 @@ namespace texture_baker_cpp
 
         void grow(const AABB &b)
         {
-            if (b.min.x != std::numeric_limits<float>::max())
+            if (b.min.x != FLT_MAX)
             {
                 grow(b.min);
                 grow(b.max);
             }
         }
+#endif
 
         // Check if two AABBs overlap
-        bool overlaps(const AABB &other) const
+        bool overlaps(const METAL_THREAD_MEM AABB &other) const
         {
             return min.x <= other.max.x && max.x >= other.min.x &&
                    min.y <= other.max.y && max.y >= other.min.y;
         }
 
-        bool overlaps(const tb_float2 &point) const
+        bool overlaps(const METAL_THREAD_MEM tb_float2 &point) const
         {
             return point.x >= min.x && point.x <= max.x &&
                    point.y >= min.y && point.y <= max.y;
         }
 
-#ifdef CUDA_ENABLED
-        __device__ bool overlaps(const float2 &point) const
+#if defined(__NVCC__)
+	    CUDA_DEVICE bool overlaps(const float2 &point) const
         {
             return point.x >= min.x && point.x <= max.x &&
                    point.y >= min.y && point.y <= max.y;
@@ -132,14 +175,14 @@ namespace texture_baker_cpp
         // Initialize AABB to an invalid state
         void invalidate()
         {
-            min = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-            max = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
+            min = {FLT_MAX, FLT_MAX};
+            max = {FLT_MIN, FLT_MIN};
         }
 
         // Calculate the area of the AABB
         float area() const
         {
-            float2 extent = {max.x - min.x, max.y - min.y};
+            tb_float2 extent = {max.x - min.x, max.y - min.y};
             return extent.x * extent.y;
         }
     };
@@ -174,6 +217,7 @@ namespace texture_baker_cpp
         tb_float2 centroid;
     };
 
+#ifndef __METAL__
     struct BVH
     {
         std::vector<BVHNode> nodes;
@@ -187,6 +231,6 @@ namespace texture_baker_cpp
         void update_node_bounds(BVHNode &node, AABB &centroidBounds);
         float find_best_split_plane(const BVHNode &node, int &best_axis, int &best_pos, AABB &centroidBounds);
     };
-
+#endif
 
 }

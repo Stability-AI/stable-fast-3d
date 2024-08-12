@@ -28,7 +28,7 @@ Stable Fast 3D is based on [TripoSR](https://github.com/VAST-AI-Research/TripoSR
 
 Ensure your environment is:
 - Python >= 3.8
-- Has CUDA available
+- Optional: CUDA or MPS has to available
 - Has PyTorch installed according to your platform: https://pytorch.org/get-started/locally/ [Make sure the Pytorch CUDA version matches your system's one.]
 - Update setuptools by `pip install -U setuptools==69.5.1`
 

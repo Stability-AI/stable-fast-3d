@@ -1,11 +1,12 @@
 #include <ATen/ATen.h>
 #include <ATen/Context.h>
-#include <ATen/cuda/CUDAContext.h>
 #include <torch/extension.h>
 #include <cmath>
 #include <omp.h>
 #include <chrono>
+#ifndef __ARM_ARCH_ISA_A64
 #include <immintrin.h>
+#endif
 
 #include "baker.h"
 
@@ -38,6 +39,7 @@ namespace texture_baker_cpp
             float leftCountArea[BINS - 1], rightCountArea[BINS - 1];
             int leftSum = 0, rightSum = 0;
 
+            #ifndef __ARM_ARCH_ISA_A64
             if (__builtin_cpu_supports("sse"))
             {
                 __m128 min4[BINS], max4[BINS];
@@ -82,6 +84,10 @@ namespace texture_baker_cpp
                     rightCountArea[BINS - 2 - i] = rightSum * (re[2] * re[3]); // 2D area calculation
                 }
             }
+            #else
+            if constexpr (false)
+            {}
+            #endif
             else
             {
                 struct Bin
@@ -136,6 +142,7 @@ namespace texture_baker_cpp
 
     void BVH::update_node_bounds(BVHNode &node, AABB &centroidBounds)
     {
+        #ifndef __ARM_ARCH_ISA_A64
         if (__builtin_cpu_supports("sse"))
         {
             __m128 min4 = _mm_set_ps1(1e30f), max4 = _mm_set_ps1(-1e30f);
@@ -192,7 +199,10 @@ namespace texture_baker_cpp
             centroidBounds.max.x = std::max(cmax_values[3], cmax_values[1]);
             centroidBounds.max.y = std::max(cmax_values[2], cmax_values[0]);
         }
-        else
+        #else
+        if constexpr (false)
+        {}
+        #endif
         {
             node.bbox.invalidate();
             centroidBounds.invalidate();
@@ -241,7 +251,7 @@ namespace texture_baker_cpp
 
         // Queue for breadth-first traversal
         std::queue<QueueEntry> node_queue;
-        node_queue.push({root, 0, triangles.size()});
+        node_queue.push({root, 0, (int)triangles.size()});
 
         // Process each node in the queue
         while (!node_queue.empty())
@@ -488,7 +498,7 @@ namespace texture_baker_cpp
         for (int idx = 0; idx < num_pixels; ++idx)
         {
             int idx_ = idx * 4; // Index into the float4 array (4 floats per pixel)
-            float3 barycentric = {
+            tb_float3 barycentric = {
                 rast_ptr[idx_ + 0],
                 rast_ptr[idx_ + 1],
                 rast_ptr[idx_ + 2],
@@ -504,11 +514,11 @@ namespace texture_baker_cpp
             }
 
             tb_int3 triangle = {indices_ptr[3 * triangle_idx + 0], indices_ptr[3 * triangle_idx + 1], indices_ptr[3 * triangle_idx + 2]};
-            float3 v1 = {attr_ptr[3 * triangle.x + 0], attr_ptr[3 * triangle.x + 1], attr_ptr[3 * triangle.x + 2]};
-            float3 v2 = {attr_ptr[3 * triangle.y + 0], attr_ptr[3 * triangle.y + 1], attr_ptr[3 * triangle.y + 2]};
-            float3 v3 = {attr_ptr[3 * triangle.z + 0], attr_ptr[3 * triangle.z + 1], attr_ptr[3 * triangle.z + 2]};
+            tb_float3 v1 = {attr_ptr[3 * triangle.x + 0], attr_ptr[3 * triangle.x + 1], attr_ptr[3 * triangle.x + 2]};
+            tb_float3 v2 = {attr_ptr[3 * triangle.y + 0], attr_ptr[3 * triangle.y + 1], attr_ptr[3 * triangle.y + 2]};
+            tb_float3 v3 = {attr_ptr[3 * triangle.z + 0], attr_ptr[3 * triangle.z + 1], attr_ptr[3 * triangle.z + 2]};
 
-            float3 interpolated;
+            tb_float3 interpolated;
             interpolated.x = v1.x * barycentric.x + v2.x * barycentric.y + v3.x * barycentric.z;
             interpolated.y = v1.y * barycentric.x + v2.y * barycentric.y + v3.y * barycentric.z;
             interpolated.z = v1.z * barycentric.x + v2.z * barycentric.y + v3.z * barycentric.z;
