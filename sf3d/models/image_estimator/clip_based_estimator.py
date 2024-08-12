@@ -95,7 +95,7 @@ class ClipBasedHeadEstimator(BaseModule):
         # Run the model
         # Resize cond_image to 224
         cond_image = nn.functional.interpolate(
-            cond_image.flatten(0, 1).permute(0, 3, 1, 2),
+            cond_image.flatten(0, 1).permute(0, 3, 1, 2).contiguous(),
             size=(224, 224),
             mode="bilinear",
             align_corners=False,

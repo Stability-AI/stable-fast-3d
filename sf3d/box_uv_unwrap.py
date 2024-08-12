@@ -285,8 +285,8 @@ def calculate_tangents(
         # t_nrm_idx is always the same as t_pos_idx
         vn_idx[i] = triangle_idxs[:, i]
 
-    tangents = torch.zeros_like(vertex_normals)
-    tansum = torch.zeros_like(vertex_normals)
+    tangents = torch.zeros_like(vertex_normals).contiguous()
+    tansum = torch.zeros_like(vertex_normals).contiguous()
 
     # Compute tangent space for each triangle
     duv1 = tex[1] - tex[0]
@@ -304,7 +304,7 @@ def calculate_tangents(
 
     # Update all 3 vertices
     for i in range(0, 3):
-        idx = vn_idx[i][:, None].repeat(1, 3)
+        idx = vn_idx[i][:, None].repeat(1, 3).contiguous()
         tangents.scatter_add_(0, idx, tang)  # tangents[n_i] = tangents[n_i] + tang
         tansum.scatter_add_(
             0, idx, torch.ones_like(tang)

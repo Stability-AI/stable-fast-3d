@@ -79,7 +79,10 @@ def normalize(x, dim=-1, eps=None):
 
 def tri_winding(tri: Float[Tensor, "*B 3 2"]) -> Float[Tensor, "*B 3 3"]:
     # One pad for determinant
-    tri_sq = F.pad(tri, (0, 1), "constant", 1.0)
+    if tri.device.type == "mps":
+        tri_sq = F.pad(tri.cpu(), (0, 1), "constant", 1.0).to("mps")
+    else:
+        tri_sq = F.pad(tri, (0, 1), "constant", 1.0)
     det_tri = torch.det(tri_sq)
     tri_rev = torch.cat(
         (tri_sq[..., 0:1, :], tri_sq[..., 2:3, :], tri_sq[..., 1:2, :]), -2
@@ -96,7 +99,10 @@ def triangle_intersection_2d(
     """Returns True if triangles collide, False otherwise"""
 
     def chk_edge(x: Float[Tensor, "*B 3 3"]) -> Bool[Tensor, "*B"]:  # noqa: F821
-        logdetx = torch.logdet(x.double())
+        if torch.backends.mps.is_available():
+            logdetx = torch.logdet(x)
+        else:
+            logdetx = torch.logdet(x.double())
         if eps is None:
             return ~torch.isfinite(logdetx)
         return ~(torch.isfinite(logdetx) & (logdetx > math.log(eps)))

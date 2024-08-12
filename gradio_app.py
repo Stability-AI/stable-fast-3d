@@ -1,6 +1,7 @@
 import os
 import tempfile
 import time
+from contextlib import nullcontext
 from functools import lru_cache
 from typing import Any
 
@@ -39,6 +40,7 @@ if os.path.exists(os.environ["GRADIO_TEMP_DIR"]):
 
     shutil.rmtree(os.environ["GRADIO_TEMP_DIR"])
 
+device = sf3d_utils.get_device()
 
 model = SF3D.from_pretrained(
     "stabilityai/stable-fast-3d",
@@ -46,12 +48,7 @@ model = SF3D.from_pretrained(
     weight_name="model.safetensors",
 )
 model.eval()
-
-device = "cuda"
-if not torch.cuda.is_available():
-    device = "cpu"
-
-model.to(device)
+model = model.to(device)
 
 example_files = [
     os.path.join("demo_files/examples", f) for f in os.listdir("demo_files/examples")
@@ -61,7 +58,9 @@ example_files = [
 def run_model(input_image, remesh_option, texture_size):
     start = time.time()
     with torch.no_grad():
-        with torch.autocast(device_type="cuda", dtype=torch.float16):
+        with torch.autocast(
+            device_type=device, dtype=torch.float16
+        ) if "cuda" in device else nullcontext():
             model_batch = create_batch(input_image)
             model_batch = {k: v.to(device) for k, v in model_batch.items()}
             trimesh_mesh, _glob_dict = model.generate_mesh(
@@ -201,6 +200,10 @@ def run_button(
         glb_file: str = run_model(background_state, remesh_option.lower(), texture_size)
         if torch.cuda.is_available():
             print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
+        elif torch.backends.mps.is_available():
+            print(
+                "Peak Memory:", torch.mps.driver_allocated_memory() / 1024 / 1024, "MB"
+            )
 
         return (
             gr.update(),

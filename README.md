@@ -35,6 +35,20 @@ Ensure your environment is:
 Then install the remaining requirements with `pip install -r requirements.txt`.
 For the gradio demo an additional `pip install -r requirements-demo.txt` is required.
 
+### Support for MPS (for mac silicon) **(experimental)**
+
+Stable Fast 3D can also run on Macs via. the MPS backend, with the texture baker using custom metal kernels similar to the corresponding CUDA kernels.
+
+Note that support is **experimental** and not guaranteed to give the same performance and/or quality as the CUDA backend.
+
+MPS backend support was tested on M1 max 64GB with the latest PyTorch nightly release. We recommend you install the latest PyTorch (2.4.0 as of writing) and/or the nightly version to avoid any issues that my arise with older PyTorch versions.
+
+### CPU Support
+
+CPU backend will automatically be used if there's no GPU detected in your system.
+
+If you do have a GPU but are facing issues and want to use the CPU backend instead, set the environment variable `SF3D_USE_CPU=1` to force the CPU backend.
+
 ### Manual Inference
 
 ```sh

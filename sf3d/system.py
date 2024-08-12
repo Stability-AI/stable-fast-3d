@@ -1,4 +1,5 @@
 import os
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -27,7 +28,7 @@ from sf3d.models.utils import (
     normalize,
     scale_tensor,
 )
-from sf3d.utils import create_intrinsic_from_fov_deg, default_cond_c2w
+from sf3d.utils import create_intrinsic_from_fov_deg, default_cond_c2w, get_device
 from texture_baker import TextureBaker
 
 
@@ -326,8 +327,11 @@ class SF3D(BaseModule):
         if self.global_estimator is not None and estimate_illumination:
             global_dict.update(self.global_estimator(non_postprocessed_codes))
 
+        device = get_device()
         with torch.no_grad():
-            with torch.autocast(device_type="cuda", enabled=False):
+            with torch.autocast(
+                device_type=device, enabled=False
+            ) if "cuda" in device else nullcontext():
                 meshes = self.triplane_to_meshes(scene_codes)
 
                 rets = []
@@ -438,12 +442,13 @@ class SF3D(BaseModule):
                             return arr
                         return (
                             dilate_fill(
-                                arr.permute(2, 0, 1)[None, ...],
+                                arr.permute(2, 0, 1)[None, ...].contiguous(),
                                 bake_mask.unsqueeze(0).unsqueeze(0),
                                 iterations=bake_resolution // 150,
                             )
                             .squeeze(0)
                             .permute(1, 2, 0)
+                            .contiguous()
                         )
 
                     verts_np = convert_data(mesh.v_pos)

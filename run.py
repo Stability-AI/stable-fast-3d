@@ -1,5 +1,6 @@
 import argparse
 import os
+from contextlib import nullcontext
 
 import rembg
 import torch
@@ -7,7 +8,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from sf3d.system import SF3D
-from sf3d.utils import remove_background, resize_foreground
+from sf3d.utils import get_device, remove_background, resize_foreground
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,9 +17,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--device",
-        default="cuda:0",
+        default=get_device(),
         type=str,
-        help="Device to use. If no CUDA-compatible device is found, the baking will fail. Default: 'cuda:0'",
+        help=f"Device to use. If no CUDA/MPS-compatible device is found, the baking will fail. Default: '{get_device()}'",
     )
     parser.add_argument(
         "--pretrained-model",
@@ -56,17 +57,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Ensure args.device contains cuda
-    if "cuda" not in args.device:
-        raise ValueError(
-            "CUDA device is required for baking and hence running the method."
-        )
+    devices = ["cuda", "mps", "cpu"]
+    if not any(args.device in device for device in devices):
+        raise ValueError("Invalid device. Use cuda, mps or cpu")
 
     output_dir = args.output_dir
     os.makedirs(output_dir, exist_ok=True)
 
     device = args.device
-    if not torch.cuda.is_available():
+    if not (torch.cuda.is_available() or torch.backends.mps.is_available()):
         device = "cpu"
+
+    print("Device used: ", device)
 
     model = SF3D.from_pretrained(
         args.pretrained_model,
@@ -105,15 +107,23 @@ if __name__ == "__main__":
 
     for i in tqdm(range(0, len(images), args.batch_size)):
         image = images[i : i + args.batch_size]
-        torch.cuda.reset_peak_memory_stats()
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
         with torch.no_grad():
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
+            with torch.autocast(
+                device_type=device, dtype=torch.float16
+            ) if "cuda" in device else nullcontext():
                 mesh, glob_dict = model.run_image(
                     image,
                     bake_resolution=args.texture_resolution,
                     remesh=args.remesh_option,
                 )
-        print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
+        if torch.cuda.is_available():
+            print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
+        elif torch.backends.mps.is_available():
+            print(
+                "Peak Memory:", torch.mps.driver_allocated_memory() / 1024 / 1024, "MB"
+            )
 
         if len(image) == 1:
             out_mesh_path = os.path.join(output_dir, str(i), "mesh.glb")
