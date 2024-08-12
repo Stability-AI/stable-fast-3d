@@ -54,7 +54,9 @@ MPS backend support was tested on M1 max 64GB with the latest PyTorch nightly re
 
 You may need to alter `rembg[gpu]==2.0.57` in the [requirements.txt](/requirements.txt) to `rembg==2.0.57` for a successful install. 
 
-You also need to run the code with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+You also need to run the code with `PYTORCH_ENABLE_MPS_FALLBACK=1`. 
+
+MPS currently consumes more memory compared to the CUDA PyTorch backend. We recommend running the CPU version if your system has less than 32GB of unified memory.
 
 ### CPU Support
 
