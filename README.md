@@ -98,6 +98,12 @@ To install:
  ```
 * Restart ComfyUI
 
+## Remesher Options:
+  -`none`: mesh unchanged after generation. no cpu overhead.
+  
+  -`tris`: verticies and edges are rearranged to form triangle topography. Implementation is from: *"[A Remeshing Approach to Multiresolution Modeling](https://github.com/sgsellan/botsch-kobbelt-remesher-libigl)" by M. Botsch and L. Kobbelt*. cpu overhead expected (~100 ms)
+  
+  -`quads`: verticies and edges are rearanged in quadralateral topography. Implementation is from *"[Instant Field-Aligned Meshes](https://github.com/wjakob/instant-meshes)" from Jakob et al.*. cpu overhead expected (~100 ms)
 
 ## Citation
 ```BibTeX
