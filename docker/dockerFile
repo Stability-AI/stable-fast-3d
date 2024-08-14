@@ -1,0 +1,18 @@
+FROM nvidia/cuda:12.0.0-devel-ubuntu22.04
+
+RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get install python3-pip git python-is-python3 -y
+
+COPY requirements-demo.txt /requirements-demo.txt
+COPY requirements.txt /requirements.txt
+COPY .env /app/.env
+RUN apt-get update && apt-get install -y dos2unix
+RUN echo '#!/bin/sh\nset -a\n. /app/.env\nset +a' > /app/set_env.sh && dos2unix /app/set_env.sh
+RUN chmod +x /app/set_env.sh
+RUN pip install -U "huggingface_hub[cli]"
+#RUN huggingface-cli login --token $HUGGING_FACE_TOKEN
+RUN pip install -U setuptools==69.5.1
+RUN pip install -r requirements.txt
+RUN pip install -r requirements-demo.txt
+RUN pip install fastapi uvicorn
+WORKDIR /webserver
