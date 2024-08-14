@@ -167,3 +167,7 @@ cython_debug/
 
 stabilityai/
 output/
+
+webserver/rabbit.png
+webserver/test.ipynb
+webserver/reconstructed_mesh.glb
