@@ -55,7 +55,7 @@ example_files = [
 ]
 
 
-def run_model(input_image, remesh_option, texture_size):
+def run_model(input_image, remesh_option, vertex_count, texture_size):
     start = time.time()
     with torch.no_grad():
         with torch.autocast(
@@ -64,7 +64,7 @@ def run_model(input_image, remesh_option, texture_size):
             model_batch = create_batch(input_image)
             model_batch = {k: v.to(device) for k, v in model_batch.items()}
             trimesh_mesh, _glob_dict = model.generate_mesh(
-                model_batch, texture_size, remesh_option
+                model_batch, texture_size, remesh_option, vertex_count
             )
             trimesh_mesh = trimesh_mesh[0]
 
@@ -192,12 +192,15 @@ def run_button(
     background_state,
     foreground_ratio,
     remesh_option,
+    vertex_count,
     texture_size,
 ):
     if run_btn == "Run":
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
-        glb_file: str = run_model(background_state, remesh_option.lower(), texture_size)
+        glb_file: str = run_model(
+            background_state, remesh_option.lower(), vertex_count, texture_size
+        )
         if torch.cuda.is_available():
             print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")
         elif torch.backends.mps.is_available():
@@ -322,6 +325,15 @@ with gr.Blocks() as demo:
                 visible=True,
             )
 
+            vertex_count_slider = gr.Slider(
+                label="Target Vertex Count",
+                minimum=1000,
+                maximum=20000,
+                value=10000,
+                step=1000,
+                visible=True,
+            )
+
             texture_size = gr.Slider(
                 label="Texture Size",
                 minimum=512,
@@ -393,6 +405,7 @@ with gr.Blocks() as demo:
             background_remove_state,
             foreground_ratio,
             remesh_option,
+            vertex_count_slider,
             texture_size,
         ],
         outputs=[

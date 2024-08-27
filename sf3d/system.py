@@ -238,6 +238,7 @@ class SF3D(BaseModule):
         image: Union[Image.Image, List[Image.Image]],
         bake_resolution: int,
         remesh: Literal["none", "triangle", "quad"] = "none",
+        vertex_count: int = -1,
         estimate_illumination: bool = False,
     ) -> Tuple[Union[trimesh.Trimesh, List[trimesh.Trimesh]], dict[str, Any]]:
         if isinstance(image, list):
@@ -274,7 +275,7 @@ class SF3D(BaseModule):
         }
 
         meshes, global_dict = self.generate_mesh(
-            batch, bake_resolution, remesh, estimate_illumination
+            batch, bake_resolution, remesh, vertex_count, estimate_illumination
         )
         if batch_size == 1:
             return meshes[0], global_dict
@@ -309,6 +310,7 @@ class SF3D(BaseModule):
         batch,
         bake_resolution: int,
         remesh: Literal["none", "triangle", "quad"] = "none",
+        vertex_count: int = -1,
         estimate_illumination: bool = False,
     ) -> Tuple[List[trimesh.Trimesh], dict[str, Any]]:
         batch["rgb_cond"] = self.image_processor(
@@ -342,10 +344,16 @@ class SF3D(BaseModule):
                         continue
 
                     if remesh == "triangle":
-                        mesh = mesh.triangle_remesh()
+                        mesh = mesh.triangle_remesh(triangle_vertex_count=vertex_count)
                     elif remesh == "quad":
-                        mesh = mesh.quad_remesh()
+                        mesh = mesh.quad_remesh(quad_vertex_count=vertex_count)
+                    else:
+                        if vertex_count > 0:
+                            print(
+                                "Warning: vertex_count is ignored when remesh is none"
+                            )
 
+                    print("After Remesh", mesh.v_pos.shape[0], mesh.t_pos_idx.shape[0])
                     mesh.unwrap_uv()
 
                     # Build textures

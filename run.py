@@ -52,6 +52,12 @@ if __name__ == "__main__":
         help="Remeshing option",
     )
     parser.add_argument(
+        "--target_vertex_count",
+        type=int,
+        help="Target vertex count. -1 does not perform a reduction.",
+        default=-1,
+    )
+    parser.add_argument(
         "--batch_size", default=1, type=int, help="Batch size for inference"
     )
     args = parser.parse_args()
@@ -117,6 +123,7 @@ if __name__ == "__main__":
                     image,
                     bake_resolution=args.texture_resolution,
                     remesh=args.remesh_option,
+                    vertex_count=args.target_vertex_count,
                 )
         if torch.cuda.is_available():
             print("Peak Memory:", torch.cuda.max_memory_allocated() / 1024 / 1024, "MB")

@@ -137,12 +137,14 @@ class Mesh:
 
     def quad_remesh(
         self,
-        quad_vertex_count: int = 12_000,
+        quad_vertex_count: int = -1,
         quad_rosy: int = 4,
         quad_crease_angle: float = 0.0,
         quad_smooth_iter: int = 2,
         quad_align_to_boundaries: bool = False,
     ) -> Mesh:
+        if quad_vertex_count < 0:
+            quad_vertex_count = self.v_pos.shape[0]
         v_pos = self.v_pos.detach().cpu().numpy().astype(np.float32)
         t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.int32)
 
@@ -171,7 +173,31 @@ class Mesh:
         self,
         triangle_average_edge_length_multiplier: float = 1.0,
         triangle_remesh_steps: int = 10,
+        triangle_vertex_count=-1,
     ):
+        if triangle_vertex_count > 0:
+            reduction = triangle_vertex_count / self.v_pos.shape[0]
+            print("Triangle reduction:", reduction)
+            if reduction < 1.0:
+                v_pos = self.v_pos.detach().cpu().numpy().astype(np.float32)
+                t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.int32)
+
+                # Simplify
+                points_out, faces_out, _, _ = gpytoolbox.decimate(
+                    v_pos,
+                    t_pos_idx,
+                    face_ratio=reduction,
+                )
+
+                # Convert back to torch
+                self.v_pos = torch.from_numpy(points_out).to(self.v_pos)
+                self.t_pos_idx = torch.from_numpy(faces_out).to(self.t_pos_idx)
+                self._edges = None
+                triangle_average_edge_length_multiplier = 1.0
+            else:
+                if triangle_average_edge_length_multiplier == 1.0:
+                    triangle_average_edge_length_multiplier = 1 / reduction
+
         edges = self.edges
         average_edge_length = (
             torch.linalg.norm(self.v_pos[edges[:, 0]] - self.v_pos[edges[:, 1]], dim=1)

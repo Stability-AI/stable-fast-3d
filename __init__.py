@@ -83,11 +83,25 @@ class StableFast3DSampler:
                     {"default": 1024, "min": 512, "max": 2048, "step": 256},
                 ),
             },
-            "optional": {"mask": ("MASK",), "remesh": (["none", "triangle", "quad"],)},
+            "optional": {
+                "mask": ("MASK",),
+                "remesh": (["none", "triangle", "quad"],),
+                "vertex_count": (
+                    "INT",
+                    {"default": 10000, "min": 1000, "max": 20000, "step": 1000},
+                ),
+            },
         }
 
     def predict(
-        s, model, image, mask, foreground_ratio, texture_resolution, remesh="none"
+        s,
+        model,
+        image,
+        mask,
+        foreground_ratio,
+        texture_resolution,
+        remesh="none",
+        vertex_count=10000,
     ):
         if image.shape[0] != 1:
             raise ValueError("Only one image can be processed at a time")
@@ -119,6 +133,7 @@ class StableFast3DSampler:
                     pil_image,
                     bake_resolution=texture_resolution,
                     remesh=remesh,
+                    vertex_count=vertex_count,
                 )
 
         if mesh.vertices.shape[0] == 0:
