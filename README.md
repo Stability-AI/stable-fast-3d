@@ -99,11 +99,14 @@ To install:
 * Restart ComfyUI
 
 ## Remesher Options:
-  -`none`: mesh unchanged after generation. no cpu overhead.
-  
-  -`tris`: verticies and edges are rearranged to form triangle topography. Implementation is from: *"[A Remeshing Approach to Multiresolution Modeling](https://github.com/sgsellan/botsch-kobbelt-remesher-libigl)" by M. Botsch and L. Kobbelt*. cpu overhead expected (~100 ms)
-  
-  -`quads`: verticies and edges are rearanged in quadralateral topography. Implementation is from *"[Instant Field-Aligned Meshes](https://github.com/wjakob/instant-meshes)" from Jakob et al.*. cpu overhead expected (~100 ms)
+
+  -`none`: mesh unchanged after generation. No CPU overhead.
+
+  -`triangle`: verticies and edges are rearranged to form a triangle topography. Implementation is from: *"[A Remeshing Approach to Multiresolution Modeling](https://github.com/sgsellan/botsch-kobbelt-remesher-libigl)" by M. Botsch and L. Kobbelt*. CPU overhead expected.
+
+  -`quad`: verticies and edges are rearanged in quadrilateral topography with a proper quad flow. The quad mesh is split into triangles for export with GLB. Implementation is from *"[Instant Field-Aligned Meshes](https://github.com/wjakob/instant-meshes)" from Jakob et al.*. CPU overhead expected.
+
+Additionally the target vertex count can be specified. This is not a hard constraint but a rough vertex count the method aims to create. This target is ignored if the remesher is set to `none`.
 
 ## Citation
 ```BibTeX
