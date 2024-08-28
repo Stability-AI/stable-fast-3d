@@ -247,7 +247,8 @@ namespace texture_baker_cpp
         std::iota(triangle_indices.begin(), triangle_indices.end(), 0);
 
         // Build BVH nodes
-        nodes.reserve(triangles.size());
+        // Reserve extra capacity to fix windows specific crashes
+        nodes.reserve(triangles.size()*2+1);
         nodes.push_back({}); // Create the root node
         root = 0;
 

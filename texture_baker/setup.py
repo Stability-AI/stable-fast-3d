@@ -1,5 +1,6 @@
 import glob
 import os
+import platform
 
 import torch
 from setuptools import find_packages, setup
@@ -39,6 +40,10 @@ def get_extensions():
     }
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
+        if platform.system() == "Windows":
+            extra_compile_args["cxx"].append("/Z7")
+            extra_compile_args["cxx"].append("/Od")
+            extra_link_args.extend(["/DEBUG"])
         extra_compile_args["cxx"].append("-UNDEBUG")
         extra_compile_args["nvcc"].append("-UNDEBUG")
         extra_compile_args["nvcc"].append("-g")
