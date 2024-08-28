@@ -10,7 +10,7 @@
 
 #include "baker.h"
 
-#define TIMING
+// #define TIMING
 #define BINS 8
 
 namespace texture_baker_cpp

@@ -99,10 +99,7 @@ def triangle_intersection_2d(
     """Returns True if triangles collide, False otherwise"""
 
     def chk_edge(x: Float[Tensor, "*B 3 3"]) -> Bool[Tensor, "*B"]:  # noqa: F821
-        if torch.backends.mps.is_available():
-            logdetx = torch.logdet(x)
-        else:
-            logdetx = torch.logdet(x.double())
+        logdetx = torch.logdet(x)
         if eps is None:
             return ~torch.isfinite(logdetx)
         return ~(torch.isfinite(logdetx) & (logdetx > math.log(eps)))

@@ -5,7 +5,7 @@
 
 #include "baker.h"
 
-#define TIMING
+// #define TIMING
 
 #define STRINGIFY(x) #x
 #define STR(x) STRINGIFY(x)
