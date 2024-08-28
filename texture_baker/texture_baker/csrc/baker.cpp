@@ -40,11 +40,16 @@ namespace texture_baker_cpp
             int leftSum = 0, rightSum = 0;
 
             #ifndef __ARM_ARCH_ISA_A64
+            #ifndef _MSC_VER
             if (__builtin_cpu_supports("sse"))
+            #elif (defined(_M_AMD64) || defined(_M_X64))
+            //SSE supported on Windows
+            if constexpr(true)
+            #endif
             {
                 __m128 min4[BINS], max4[BINS];
-                uint count[BINS];
-                for (uint i = 0; i < BINS; i++)
+                unsigned int count[BINS];
+                for (unsigned int i = 0; i < BINS; i++)
                     min4[i] = _mm_set_ps1(1e30f),
                     max4[i] = _mm_set_ps1(-1e30f),
                     count[i] = 0;
@@ -143,7 +148,12 @@ namespace texture_baker_cpp
     void BVH::update_node_bounds(BVHNode &node, AABB &centroidBounds)
     {
         #ifndef __ARM_ARCH_ISA_A64
+	#ifndef _MSC_VER
         if (__builtin_cpu_supports("sse"))
+        #elif (defined(_M_AMD64) || defined(_M_X64))
+	//SSE supported on Windows
+	if constexpr(true)
+	#endif
         {
             __m128 min4 = _mm_set_ps1(1e30f), max4 = _mm_set_ps1(-1e30f);
             __m128 cmin4 = _mm_set_ps1(1e30f), cmax4 = _mm_set_ps1(-1e30f);
