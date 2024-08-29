@@ -29,6 +29,7 @@ Stable Fast 3D is based on [TripoSR](https://github.com/VAST-AI-Research/TripoSR
 Ensure your environment is:
 - Python >= 3.8
 - Optional: CUDA or MPS has to be available
+- For Windows **(experimental)**: Visual Studio 2022
 - Has PyTorch installed according to your platform: https://pytorch.org/get-started/locally/ [Make sure the Pytorch CUDA version matches your system's.]
 - Update setuptools by `pip install -U setuptools==69.5.1`
 - Install wheel by `pip install wheel`
@@ -55,6 +56,13 @@ MPS backend support was tested on M1 max 64GB with the latest PyTorch nightly re
 You also need to run the code with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
 
 MPS currently consumes more memory compared to the CUDA PyTorch backend. We recommend running the CPU version if your system has less than 32GB of unified memory.
+
+### Windows Support **(experimental)**
+
+To run Stable Fast 3D on Windows, you must install Visual Studio (currently tested on VS 2022) and the appropriate PyTorch and CUDA versions.
+Then, follow the installation steps as mentioned above.
+
+Note that Windows support is **experimental** and not guaranteed to give the same performance and/or quality as Linux.
 
 ### CPU Support
 
