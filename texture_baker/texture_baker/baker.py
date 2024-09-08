@@ -54,7 +54,6 @@ class TextureBaker(nn.Module):
             attr (Tensor, num_vertices 3, float): Attributes of the mesh
             rast (Tensor, bake_resolution bake_resolution 4, float): Rasterized map
             face_indices (Tensor, num_faces 3, int): Face indices of the mesh
-            uv (Tensor, num_vertices 2, float): UV coordinates of the mesh
 
         Returns:
             Tensor, bake_resolution bake_resolution 3, float: Interpolated attributes
@@ -83,4 +82,4 @@ class TextureBaker(nn.Module):
             Tensor, bake_resolution bake_resolution 3, float: Baked texture
         """
         rast = self.rasterize(uv, face_indices, bake_resolution)
-        return self.interpolate(attr, rast, face_indices, uv)
+        return self.interpolate(attr, rast, face_indices)
