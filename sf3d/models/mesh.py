@@ -11,8 +11,18 @@ import trimesh
 from jaxtyping import Float, Integer
 from torch import Tensor
 
-from sf3d.box_uv_unwrap import box_projection_uv_unwrap
 from sf3d.models.utils import dot
+
+try:
+    from uv_unwrapper import Unwrapper
+except ImportError:
+    import logging
+
+    logging.warning(
+        "Could not import uv_unwrapper. Please install it via `pip install uv_unwrapper/`"
+    )
+    # Exit early to avoid further errors
+    raise ImportError("uv_unwrapper not found")
 
 
 class Mesh:
@@ -28,6 +38,8 @@ class Mesh:
         self.extras: Dict[str, Any] = {}
         for k, v in kwargs.items():
             self.add_extra(k, v)
+
+        self.unwrapper = Unwrapper()
 
     def add_extra(self, k, v) -> None:
         self.extras[k] = v
@@ -229,7 +241,7 @@ class Mesh:
         self,
         island_padding: float = 0.02,
     ) -> Mesh:
-        uv, indices = box_projection_uv_unwrap(
+        uv, indices = self.unwrapper(
             self.v_pos, self.v_nrm, self.t_pos_idx, island_padding
         )
 

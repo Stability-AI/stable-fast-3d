@@ -11,3 +11,4 @@ rembg==2.0.57; sys_platform == 'darwin'
 git+https://github.com/vork/PyNanoInstantMeshes.git
 gpytoolbox==0.2.0
 ./texture_baker/
+./uv_unwrapper/

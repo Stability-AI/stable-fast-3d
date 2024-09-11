@@ -1,6 +1,5 @@
 import dataclasses
 import importlib
-import math
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple, Union
 
@@ -9,7 +8,7 @@ import PIL
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from jaxtyping import Bool, Float, Int, Num
+from jaxtyping import Float, Int, Num
 from omegaconf import DictConfig, OmegaConf
 from torch import Tensor
 
@@ -75,64 +74,6 @@ def normalize(x, dim=-1, eps=None):
     if eps is None:
         eps = EPS_DTYPE[x.dtype]
     return F.normalize(x, dim=dim, p=2, eps=eps)
-
-
-def tri_winding(tri: Float[Tensor, "*B 3 2"]) -> Float[Tensor, "*B 3 3"]:
-    # One pad for determinant
-    if tri.device.type == "mps":
-        tri_sq = F.pad(tri.cpu(), (0, 1), "constant", 1.0).to("mps")
-    else:
-        tri_sq = F.pad(tri, (0, 1), "constant", 1.0)
-    det_tri = torch.det(tri_sq)
-    tri_rev = torch.cat(
-        (tri_sq[..., 0:1, :], tri_sq[..., 2:3, :], tri_sq[..., 1:2, :]), -2
-    )
-    tri_sq[det_tri < 0] = tri_rev[det_tri < 0]
-    return tri_sq
-
-
-def triangle_intersection_2d(
-    t1: Float[Tensor, "*B 3 2"],
-    t2: Float[Tensor, "*B 3 2"],
-    eps=1e-12,
-) -> Float[Tensor, "*B"]:  # noqa: F821
-    """Returns True if triangles collide, False otherwise"""
-
-    def chk_edge(x: Float[Tensor, "*B 3 3"]) -> Bool[Tensor, "*B"]:  # noqa: F821
-        logdetx = torch.logdet(x)
-        if eps is None:
-            return ~torch.isfinite(logdetx)
-        return ~(torch.isfinite(logdetx) & (logdetx > math.log(eps)))
-
-    t1s = tri_winding(t1)
-    t2s = tri_winding(t2)
-
-    # Assume the triangles do not collide in the begging
-    ret = torch.zeros(t1.shape[0], dtype=torch.bool, device=t1.device)
-    for i in range(3):
-        edge = torch.roll(t1s, i, dims=1)[:, :2, :]
-        # Check if all points of triangle 2 lay on the external side of edge E.
-        # If this is the case the triangle do not collide
-        upd = (
-            chk_edge(torch.cat((edge, t2s[:, 0:1]), 1))
-            & chk_edge(torch.cat((edge, t2s[:, 1:2]), 1))
-            & chk_edge(torch.cat((edge, t2s[:, 2:3]), 1))
-        )
-        # Here no collision is still True due to inversion
-        ret = ret | upd
-
-    for i in range(3):
-        edge = torch.roll(t2s, i, dims=1)[:, :2, :]
-
-        upd = (
-            chk_edge(torch.cat((edge, t1s[:, 0:1]), 1))
-            & chk_edge(torch.cat((edge, t1s[:, 1:2]), 1))
-            & chk_edge(torch.cat((edge, t1s[:, 2:3]), 1))
-        )
-        # Here no collision is still True due to inversion
-        ret = ret | upd
-
-    return ~ret  # Do the inversion
 
 
 ValidScale = Union[Tuple[float, float], Num[Tensor, "2 D"]]

@@ -29,7 +29,17 @@ from sf3d.models.utils import (
     scale_tensor,
 )
 from sf3d.utils import create_intrinsic_from_fov_deg, default_cond_c2w, get_device
-from texture_baker import TextureBaker
+
+try:
+    from texture_baker import TextureBaker
+except ImportError:
+    import logging
+
+    logging.warning(
+        "Could not import texture_baker. Please install it via `pip install texture-baker/`"
+    )
+    # Exit early to avoid further errors
+    raise ImportError("texture_baker not found")
 
 
 class SF3D(BaseModule):
