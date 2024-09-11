@@ -327,10 +327,9 @@ with gr.Blocks() as demo:
 
             vertex_count_slider = gr.Slider(
                 label="Target Vertex Count",
-                minimum=500,
+                minimum=-1,
                 maximum=20000,
-                value=10000,
-                step=500,
+                value=-1,
                 visible=True,
             )
 
