@@ -151,14 +151,14 @@ class Mesh:
         self,
         quad_vertex_count: int = -1,
         quad_rosy: int = 4,
-        quad_crease_angle: float = 0.0,
+        quad_crease_angle: float = -1.0,
         quad_smooth_iter: int = 2,
         quad_align_to_boundaries: bool = False,
     ) -> Mesh:
         if quad_vertex_count < 0:
             quad_vertex_count = self.v_pos.shape[0]
         v_pos = self.v_pos.detach().cpu().numpy().astype(np.float32)
-        t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.int32)
+        t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.uint32)
 
         new_vert, new_faces = pynim.remesh(
             v_pos,
@@ -169,11 +169,11 @@ class Mesh:
             creaseAngle=quad_crease_angle,
             align_to_boundaries=quad_align_to_boundaries,
             smooth_iter=quad_smooth_iter,
-            deterministic=True,
+            deterministic=False,
         )
 
         # Briefly load in trimesh
-        mesh = trimesh.Trimesh(vertices=new_vert, faces=new_faces)
+        mesh = trimesh.Trimesh(vertices=new_vert, faces=new_faces.astype(np.int32))
 
         v_pos = torch.from_numpy(mesh.vertices).to(self.v_pos).contiguous()
         t_pos_idx = torch.from_numpy(mesh.faces).to(self.t_pos_idx).contiguous()
