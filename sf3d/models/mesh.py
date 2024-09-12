@@ -184,7 +184,7 @@ class Mesh:
 
     def triangle_remesh(
         self,
-        triangle_average_edge_length_multiplier: float = 1.0,
+        triangle_average_edge_length_multiplier: Optional[float] = None,
         triangle_remesh_steps: int = 10,
         triangle_vertex_count=-1,
     ):
@@ -193,42 +193,41 @@ class Mesh:
             print("Triangle reduction:", reduction)
             v_pos = self.v_pos.detach().cpu().numpy().astype(np.float32)
             t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.int32)
-            if reduction < 1.0:
-                # Simplify
-                points_out, faces_out, _, _ = gpytoolbox.decimate(
+            if reduction > 1.0:
+                subdivide_iters = int(math.ceil(math.log(reduction) / math.log(2)))
+                print("Subdivide iters:", subdivide_iters)
+                v_pos, t_pos_idx = gpytoolbox.subdivide(
                     v_pos,
                     t_pos_idx,
-                    face_ratio=reduction,
+                    iters=subdivide_iters,
                 )
+                reduction = triangle_vertex_count / v_pos.shape[0]
 
-                # Convert back to torch
-                self.v_pos = torch.from_numpy(points_out).to(self.v_pos)
-                self.t_pos_idx = torch.from_numpy(faces_out).to(self.t_pos_idx)
-                self._edges = None
-                triangle_average_edge_length_multiplier = 1.0
-            else:
-                v, f = gpytoolbox.subdivide(
-                    v_pos, t_pos_idx, iters=int(math.ceil(reduction))
-                )
-                reduction = triangle_vertex_count / v.shape[0]
-                points_out, faces_out, _, _ = gpytoolbox.decimate(
-                    v,
-                    f,
-                    face_ratio=reduction,
-                )
+            # Simplify
+            points_out, faces_out, _, _ = gpytoolbox.decimate(
+                v_pos,
+                t_pos_idx,
+                face_ratio=reduction,
+            )
 
-                # Convert back to torch
-                self.v_pos = torch.from_numpy(points_out).to(self.v_pos)
-                self.t_pos_idx = torch.from_numpy(faces_out).to(self.t_pos_idx)
-                self._edges = None
-                triangle_average_edge_length_multiplier = 1.0
+            # Convert back to torch
+            self.v_pos = torch.from_numpy(points_out).to(self.v_pos)
+            self.t_pos_idx = torch.from_numpy(faces_out).to(self.t_pos_idx)
+            self._edges = None
+            triangle_average_edge_length_multiplier = None
 
         edges = self.edges
-        average_edge_length = (
-            torch.linalg.norm(self.v_pos[edges[:, 0]] - self.v_pos[edges[:, 1]], dim=1)
-            .mean()
-            .item()
-        )
+        if triangle_average_edge_length_multiplier is None:
+            h = None
+        else:
+            h = float(
+                torch.linalg.norm(
+                    self.v_pos[edges[:, 0]] - self.v_pos[edges[:, 1]], dim=1
+                )
+                .mean()
+                .item()
+                * triangle_average_edge_length_multiplier
+            )
 
         # Convert to numpy
         v_pos = self.v_pos.detach().cpu().numpy().astype(np.float64)
@@ -239,7 +238,7 @@ class Mesh:
             v_pos,
             t_pos_idx,
             triangle_remesh_steps,
-            float(average_edge_length * triangle_average_edge_length_multiplier),
+            h,
         )
 
         # Convert back to torch
