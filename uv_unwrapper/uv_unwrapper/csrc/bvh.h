@@ -98,16 +98,17 @@ public:
   std::vector<int> Intersect(Triangle &triangle);
 
 private:
-  void Subdivide(uint node_idx, uint &nodePtr, AABB &centroidBounds);
-  void UpdateNodeBounds(uint nodeIdx, AABB &centroidBounds);
+  void Subdivide(unsigned int node_idx, unsigned int &nodePtr,
+                 AABB &centroidBounds);
+  void UpdateNodeBounds(unsigned int nodeIdx, AABB &centroidBounds);
   float FindBestSplitPlane(BVHNode &node, int &axis, int &splitPos,
                            AABB &centroidBounds);
 
 public:
   int *triIdx = nullptr;
   int *actualIdx = nullptr;
-  uint triCount;
-  uint nodesUsed;
+  unsigned int triCount;
+  unsigned int nodesUsed;
   BVHNode *bvhNode = nullptr;
   Triangle *triangle = nullptr;
 };

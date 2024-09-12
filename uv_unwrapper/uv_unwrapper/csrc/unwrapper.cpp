@@ -11,6 +11,11 @@
 
 // #define TIMING
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 namespace UVUnwrapper {
 void create_bvhs(BVH *bvhs, Triangle *triangles,
                  std::vector<std::set<int>> &triangle_per_face, int num_faces,

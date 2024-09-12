@@ -74,9 +74,16 @@ BVH::~BVH() {
     delete[] bvhNode;
 }
 
-void BVH::UpdateNodeBounds(uint nodeIdx, AABB &centroidBounds) {
+void BVH::UpdateNodeBounds(unsigned int nodeIdx, AABB &centroidBounds) {
   BVHNode &node = bvhNode[nodeIdx];
-  if (__builtin_cpu_supports("sse")) {
+#ifndef __ARM_ARCH_ISA_A64
+#ifndef _MSC_VER
+  if (__builtin_cpu_supports("sse"))
+#elif (defined(_M_AMD64) || defined(_M_X64))
+  // SSE supported on Windows
+  if constexpr (true)
+#endif
+  {
     __m128 min4 = _mm_set_ps1(FLT_MAX), max4 = _mm_set_ps1(FLT_MIN);
     __m128 cmin4 = _mm_set_ps1(FLT_MAX), cmax4 = _mm_set_ps1(FLT_MIN);
     for (int i = node.start; i < node.end; i += 2) {
@@ -129,7 +136,12 @@ void BVH::UpdateNodeBounds(uint nodeIdx, AABB &centroidBounds) {
     centroidBounds.min.y = std::min(cmin_values[2], cmin_values[0]);
     centroidBounds.max.x = std::max(cmax_values[3], cmax_values[1]);
     centroidBounds.max.y = std::max(cmax_values[2], cmax_values[0]);
-  } else {
+  }
+#else
+  if constexpr (false) {
+  }
+#endif
+  else {
     node.bbox.invalidate();
     centroidBounds.invalidate();
 
@@ -144,9 +156,10 @@ void BVH::UpdateNodeBounds(uint nodeIdx, AABB &centroidBounds) {
   }
 }
 
-void BVH::Subdivide(uint root_idx, uint &nodePtr, AABB &rootCentroidBounds) {
+void BVH::Subdivide(unsigned int root_idx, unsigned int &nodePtr,
+                    AABB &rootCentroidBounds) {
   // Create a queue for the nodes to be subdivided
-  std::queue<std::tuple<uint, AABB>> nodeQueue;
+  std::queue<std::tuple<unsigned int, AABB>> nodeQueue;
   nodeQueue.push(std::make_tuple(root_idx, rootCentroidBounds));
 
   while (!nodeQueue.empty()) {
@@ -223,10 +236,17 @@ float BVH::FindBestSplitPlane(BVHNode &node, int &best_axis, int &best_pos,
     float scale = BINS / (boundsMax - boundsMin);
     float leftCountArea[BINS - 1], rightCountArea[BINS - 1];
     int leftSum = 0, rightSum = 0;
-    if (__builtin_cpu_supports("sse")) {
+#ifndef __ARM_ARCH_ISA_A64
+#ifndef _MSC_VER
+    if (__builtin_cpu_supports("sse"))
+#elif (defined(_M_AMD64) || defined(_M_X64))
+    // SSE supported on Windows
+    if constexpr (true)
+#endif
+    {
       __m128 min4[BINS], max4[BINS];
-      uint count[BINS];
-      for (uint i = 0; i < BINS; i++)
+      unsigned int count[BINS];
+      for (unsigned int i = 0; i < BINS; i++)
         min4[i] = _mm_set_ps1(FLT_MAX), max4[i] = _mm_set_ps1(FLT_MIN),
         count[i] = 0;
       for (int i = node.start; i < node.end; i++) {
@@ -263,7 +283,12 @@ float BVH::FindBestSplitPlane(BVHNode &node, int &best_axis, int &best_pos,
         rightCountArea[BINS - 2 - i] =
             rightSum * (re[2] * re[3]); // 2D area calculation
       }
-    } else {
+    }
+#else
+    if constexpr (false) {
+    }
+#endif
+    else {
       struct Bin {
         AABB bounds;
         int triCount = 0;
