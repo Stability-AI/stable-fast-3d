@@ -88,7 +88,7 @@ class StableFast3DSampler:
                 "remesh": (["none", "triangle", "quad"],),
                 "vertex_count": (
                     "INT",
-                    {"default": 10000, "min": 1000, "max": 20000, "step": 1000},
+                    {"default": -1, "min": -1, "max": 20000, "step": 1},
                 ),
             },
         }
@@ -101,7 +101,7 @@ class StableFast3DSampler:
         foreground_ratio,
         texture_resolution,
         remesh="none",
-        vertex_count=10000,
+        vertex_count=-1,
     ):
         if image.shape[0] != 1:
             raise ValueError("Only one image can be processed at a time")
