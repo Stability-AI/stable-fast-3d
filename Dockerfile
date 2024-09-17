@@ -1,4 +1,4 @@
-FROM python:slim
+FROM python:slim-bullseye
 
 WORKDIR /app
 RUN apt-get update && \
