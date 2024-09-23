@@ -2,7 +2,9 @@
 
 #include <cfloat>
 #include <cmath>
+#ifndef __ARM_ARCH_ISA_A64
 #include <immintrin.h>
+#endif
 #include <limits>
 #include <vector>
 

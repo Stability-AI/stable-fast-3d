@@ -1,3 +1,4 @@
+import torch
 import glob
 import os
 
@@ -15,6 +16,7 @@ def get_extensions():
     if debug_mode:
         print("Compiling in debug mode")
 
+    is_mac = True if torch.backends.mps.is_available() else False
     extension = CppExtension
 
     extra_link_args = []
@@ -22,9 +24,8 @@ def get_extensions():
         "cxx": [
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
-            "-fopenmp",
-            "-march=native",
-        ],
+            ("-Xclang " if is_mac else "") + "-fopenmp",
+        ] + ["-march=native"] if not is_mac else [],
     }
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
@@ -54,8 +55,8 @@ def get_extensions():
                 "c10",
                 "torch",
                 "torch_cpu",
-                "torch_python",
-            ],
+                "torch_python"
+            ] + ["omp"] if is_mac else [],
         )
     )
 

@@ -51,6 +51,8 @@ Stable Fast 3D can also run on Macs via the MPS backend, with the texture baker 
 
 Note that support is **experimental** and not guaranteed to give the same performance and/or quality as the CUDA backend.
 
+You will need to install OpenMP runtime to enable clang support for `-fopenmp`. Follow the tutorial here https://mac.r-project.org/openmp/ 
+
 MPS backend support was tested on M1 max 64GB with the latest PyTorch nightly release. We recommend you install the latest PyTorch (2.4.0 as of writing) and/or the nightly version to avoid any issues that my arise with older PyTorch versions.
 
 You also need to run the code with `PYTORCH_ENABLE_MPS_FALLBACK=1`.
