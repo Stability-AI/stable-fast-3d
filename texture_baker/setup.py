@@ -20,10 +20,11 @@ def get_extensions():
     use_metal = (
         os.getenv("USE_METAL", "1" if torch.backends.mps.is_available() else "0") == "1"
     )
+    use_native_arch = os.getenv("USE_NATIVE_ARCH", "1") == "1"
     if debug_mode:
         print("Compiling in debug mode")
 
-    use_cuda = use_cuda and torch.cuda.is_available() and CUDA_HOME is not None
+    use_cuda = use_cuda and CUDA_HOME is not None
     extension = CUDAExtension if use_cuda else CppExtension
 
     extra_link_args = []
@@ -32,8 +33,7 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             "-fopenmp",
-            "-march=native",
-        ],
+        ] + ["-march=native"] if use_native_arch else [],
         "nvcc": [
             "-O3" if not debug_mode else "-O0",
         ],

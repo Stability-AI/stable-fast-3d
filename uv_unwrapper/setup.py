@@ -17,6 +17,7 @@ def get_extensions():
         print("Compiling in debug mode")
 
     is_mac = True if torch.backends.mps.is_available() else False
+    use_native_arch = not is_mac and os.getenv("USE_NATIVE_ARCH", "1") == "1"
     extension = CppExtension
 
     extra_link_args = []
@@ -25,7 +26,7 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             ("-Xclang " if is_mac else "") + "-fopenmp",
-        ] + ["-march=native"] if not is_mac else [],
+        ] + ["-march=native"] if use_native_arch else [],
     }
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
