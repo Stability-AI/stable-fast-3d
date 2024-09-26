@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  stablefast3d:
+    image: stablefast3d
+    ports:
+      - 8100:8000
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./model:/app/stable-fast-3d/model
