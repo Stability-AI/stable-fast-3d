@@ -128,6 +128,7 @@ env/
 venv*/
 ENV/
 env.bak/
+sf3d_env/
 
 # Spyder project settings
 .spyderproject
