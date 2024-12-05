@@ -22,7 +22,6 @@ from sf3d.models.utils import (
     ImageProcessor,
     convert_data,
     dilate_fill,
-    dot,
     find_class,
     float32_to_uint8_np,
     normalize,
@@ -432,24 +431,24 @@ class SF3D(BaseModule):
                                 gb_tng = tng[bake_mask]
                                 gb_tng = F.normalize(gb_tng, dim=-1)
                                 gb_btng = F.normalize(
-                                    torch.cross(gb_tng, gb_nrm, dim=-1), dim=-1
+                                    torch.cross(gb_nrm, gb_tng, dim=-1), dim=-1
                                 )
                                 normal = F.normalize(mat_out["normal"], dim=-1)
 
-                                bump = torch.cat(
-                                    # Check if we have to flip some things
-                                    (
-                                        dot(normal, gb_tng),
-                                        dot(normal, gb_btng),
-                                        dot(normal, gb_nrm).clip(
-                                            0.3, 1
-                                        ),  # Never go below 0.3. This would indicate a flipped (or close to one) normal
-                                    ),
-                                    -1,
+                                # Create tangent space matrix and transform normal
+                                tangent_matrix = torch.stack(
+                                    [gb_tng, gb_btng, gb_nrm], dim=-1
                                 )
-                                bump = (bump * 0.5 + 0.5).clamp(0, 1)
+                                normal_tangent = torch.bmm(
+                                    tangent_matrix.transpose(1, 2), normal.unsqueeze(-1)
+                                ).squeeze(-1)
 
-                                f[bake_mask] = bump.view(-1, 3)
+                                # Convert from [-1,1] to [0,1] range for storage
+                                normal_tangent = (normal_tangent * 0.5 + 0.5).clamp(
+                                    0, 1
+                                )
+
+                                f[bake_mask] = normal_tangent.view(-1, 3)
                                 mat_out["bump"] = f
                             else:
                                 f[bake_mask] = v.view(-1, v.shape[-1])
