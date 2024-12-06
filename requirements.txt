@@ -1,3 +1,5 @@
+torch<=2.4.0
+torchvision<=0.19
 einops==0.7.0
 jaxtyping==0.2.31
 omegaconf==2.3.0
