@@ -1,2 +1,2 @@
-gradio==4.41.0
+gradio==5.5.0
 gradio-litmodel3d==0.0.1
