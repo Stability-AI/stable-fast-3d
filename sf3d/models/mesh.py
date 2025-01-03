@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 import gpytoolbox
 import numpy as np
-import pynim
+import pynanoinstantmeshes
 import torch
 import torch.nn.functional as F
 import trimesh
@@ -161,7 +161,7 @@ class Mesh:
         v_pos = self.v_pos.detach().cpu().numpy().astype(np.float32)
         t_pos_idx = self.t_pos_idx.detach().cpu().numpy().astype(np.uint32)
 
-        new_vert, new_faces = pynim.remesh(
+        new_vert, new_faces = pynanoinstantmeshes.remesh(
             v_pos,
             t_pos_idx,
             quad_vertex_count // 4,
