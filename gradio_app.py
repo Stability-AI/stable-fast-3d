@@ -123,61 +123,6 @@ def remove_background(input_image: Image) -> Image:
     return rembg.remove(input_image, session=rembg_session)
 
 
-def resize_foreground(
-    image: Image,
-    ratio: float,
-) -> Image:
-    image = np.array(image)
-    assert image.shape[-1] == 4
-    alpha = np.where(image[..., 3] > 0)
-    y1, y2, x1, x2 = (
-        alpha[0].min(),
-        alpha[0].max(),
-        alpha[1].min(),
-        alpha[1].max(),
-    )
-    # crop the foreground
-    fg = image[y1:y2, x1:x2]
-    # pad to square
-    size = max(fg.shape[0], fg.shape[1])
-    ph0, pw0 = (size - fg.shape[0]) // 2, (size - fg.shape[1]) // 2
-    ph1, pw1 = size - fg.shape[0] - ph0, size - fg.shape[1] - pw0
-    new_image = np.pad(
-        fg,
-        ((ph0, ph1), (pw0, pw1), (0, 0)),
-        mode="constant",
-        constant_values=((0, 0), (0, 0), (0, 0)),
-    )
-
-    # compute padding according to the ratio
-    new_size = int(new_image.shape[0] / ratio)
-    # pad to size, double side
-    ph0, pw0 = (new_size - size) // 2, (new_size - size) // 2
-    ph1, pw1 = new_size - size - ph0, new_size - size - pw0
-    new_image = np.pad(
-        new_image,
-        ((ph0, ph1), (pw0, pw1), (0, 0)),
-        mode="constant",
-        constant_values=((0, 0), (0, 0), (0, 0)),
-    )
-    new_image = Image.fromarray(new_image, mode="RGBA").resize(
-        (COND_WIDTH, COND_HEIGHT)
-    )
-    return new_image
-
-
-def square_crop(input_image: Image) -> Image:
-    # Perform a center square crop
-    min_size = min(input_image.size)
-    left = (input_image.size[0] - min_size) // 2
-    top = (input_image.size[1] - min_size) // 2
-    right = (input_image.size[0] + min_size) // 2
-    bottom = (input_image.size[1] + min_size) // 2
-    return input_image.crop((left, top, right, bottom)).resize(
-        (COND_WIDTH, COND_HEIGHT)
-    )
-
-
 def show_mask_img(input_image: Image) -> Image:
     img_numpy = np.array(input_image)
     alpha = img_numpy[:, :, 3] / 255.0
@@ -219,12 +164,13 @@ def run_button(
     elif run_btn == "Remove Background":
         rem_removed = remove_background(input_image)
 
-        sqr_crop = square_crop(rem_removed)
-        fr_res = resize_foreground(sqr_crop, foreground_ratio)
+        fr_res = sf3d_utils.resize_foreground(
+            rem_removed, foreground_ratio, out_size=(COND_WIDTH, COND_HEIGHT)
+        )
 
         return (
             gr.update(value="Run", visible=True),
-            sqr_crop,
+            rem_removed,
             fr_res,
             gr.update(value=show_mask_img(fr_res), visible=True),
             gr.update(value=None, visible=False),
@@ -247,11 +193,12 @@ def requires_bg_remove(image, fr):
 
     if min_alpha == 0:
         print("Already has alpha")
-        sqr_crop = square_crop(image)
-        fr_res = resize_foreground(sqr_crop, fr)
+        fr_res = sf3d_utils.resize_foreground(
+            image, foreground_ratio, out_size=(COND_WIDTH, COND_HEIGHT)
+        )
         return (
             gr.update(value="Run", visible=True),
-            sqr_crop,
+            image,
             fr_res,
             gr.update(value=show_mask_img(fr_res), visible=True),
             gr.update(visible=False),
@@ -268,7 +215,9 @@ def requires_bg_remove(image, fr):
 
 
 def update_foreground_ratio(img_proc, fr):
-    foreground_res = resize_foreground(img_proc, fr)
+    foreground_res = sf3d_utils.resize_foreground(
+        img_proc, fr, out_size=(COND_WIDTH, COND_HEIGHT)
+    )
     return (
         foreground_res,
         gr.update(value=show_mask_img(foreground_res)),

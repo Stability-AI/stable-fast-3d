@@ -1,9 +1,10 @@
 import os
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 import rembg
 import torch
+import torchvision.transforms.functional as torchvision_F
 from PIL import Image
 
 import sf3d.models.utils as sf3d_utils
@@ -63,42 +64,42 @@ def remove_background(
     return image
 
 
-def resize_foreground(
-    image: Image,
-    ratio: float,
-) -> Image:
-    image = np.array(image)
-    assert image.shape[-1] == 4
-    alpha = np.where(image[..., 3] > 0.5)
-    y1, y2, x1, x2 = (
-        alpha[0].min(),
-        alpha[0].max(),
-        alpha[1].min(),
-        alpha[1].max(),
-    )
-    # crop the foreground
-    fg = image[y1:y2, x1:x2]
-    # pad to square
-    size = max(fg.shape[0], fg.shape[1])
-    ph0, pw0 = (size - fg.shape[0]) // 2, (size - fg.shape[1]) // 2
-    ph1, pw1 = size - fg.shape[0] - ph0, size - fg.shape[1] - pw0
-    new_image = np.pad(
-        fg,
-        ((ph0, ph1), (pw0, pw1), (0, 0)),
-        mode="constant",
-        constant_values=((0, 0), (0, 0), (0, 0)),
-    )
+def get_1d_bounds(arr):
+    nz = np.flatnonzero(arr)
+    return nz[0], nz[-1]
 
-    # compute padding according to the ratio
-    new_size = int(new_image.shape[0] / ratio)
-    # pad to size, double side
-    ph0, pw0 = (new_size - size) // 2, (new_size - size) // 2
-    ph1, pw1 = new_size - size - ph0, new_size - size - pw0
-    new_image = np.pad(
-        new_image,
-        ((ph0, ph1), (pw0, pw1), (0, 0)),
-        mode="constant",
-        constant_values=((0, 0), (0, 0), (0, 0)),
+
+def get_bbox_from_mask(mask, thr=0.5):
+    masks_for_box = (mask > thr).astype(np.float32)
+    assert masks_for_box.sum() > 0, "Empty mask!"
+    x0, x1 = get_1d_bounds(masks_for_box.sum(axis=-2))
+    y0, y1 = get_1d_bounds(masks_for_box.sum(axis=-1))
+    return x0, y0, x1, y1
+
+
+def resize_foreground(
+    image: Union[Image.Image, np.ndarray],
+    ratio: float,
+    out_size=None,
+) -> Image:
+    if isinstance(image, np.ndarray):
+        image = Image.fromarray(image, mode="RGBA")
+    assert image.mode == "RGBA"
+    # Get bounding box
+    mask_np = np.array(image)[:, :, -1]
+    x1, y1, x2, y2 = get_bbox_from_mask(mask_np, thr=0.5)
+    h, w = y2 - y1, x2 - x1
+    yc, xc = (y1 + y2) / 2, (x1 + x2) / 2
+    scale = max(h, w) / ratio
+
+    new_image = torchvision_F.crop(
+        image,
+        top=int(yc - scale / 2),
+        left=int(xc - scale / 2),
+        height=int(scale),
+        width=int(scale),
     )
-    new_image = Image.fromarray(new_image, mode="RGBA")
+    if out_size is not None:
+        new_image = new_image.resize(out_size)
+
     return new_image
