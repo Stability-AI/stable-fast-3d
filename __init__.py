@@ -2,6 +2,7 @@ import base64
 import logging
 import os
 import sys
+from contextlib import nullcontext
 
 import comfy.model_management
 import folder_paths
@@ -128,7 +129,9 @@ class StableFast3DSampler:
         pil_image = resize_foreground(pil_image, foreground_ratio)
         print(remesh)
         with torch.no_grad():
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
+            with torch.autocast(
+                device_type="cuda", dtype=torch.bfloat16
+            ) if "cuda" in comfy.model_management.get_torch_device().type else nullcontext():
                 mesh, glob_dict = model.run_image(
                     pil_image,
                     bake_resolution=texture_resolution,

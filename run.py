@@ -117,7 +117,7 @@ if __name__ == "__main__":
             torch.cuda.reset_peak_memory_stats()
         with torch.no_grad():
             with torch.autocast(
-                device_type=device, dtype=torch.float16
+                device_type=device, dtype=torch.bfloat16
             ) if "cuda" in device else nullcontext():
                 mesh, glob_dict = model.run_image(
                     image,

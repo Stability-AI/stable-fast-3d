@@ -59,7 +59,7 @@ def run_model(input_image, remesh_option, vertex_count, texture_size):
     start = time.time()
     with torch.no_grad():
         with torch.autocast(
-            device_type=device, dtype=torch.float16
+            device_type=device, dtype=torch.bfloat16
         ) if "cuda" in device else nullcontext():
             model_batch = create_batch(input_image)
             model_batch = {k: v.to(device) for k, v in model_batch.items()}
