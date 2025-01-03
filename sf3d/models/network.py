@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from jaxtyping import Float
 from torch import Tensor
+from torch.amp import custom_bwd, custom_fwd
 from torch.autograd import Function
-from torch.cuda.amp import custom_bwd, custom_fwd
 
 from sf3d.models.utils import BaseModule, normalize
 from sf3d.utils import get_device
@@ -79,7 +79,10 @@ class _TruncExp(Function):  # pylint: disable=abstract-method
     # https://github.com/ashawkey/torch-ngp/blob/93b08a0d4ec1cc6e69d85df7f0acdfb99603b628/activation.py
     @staticmethod
     @conditional_decorator(
-        custom_fwd, "cuda" in get_device(), cast_inputs=torch.float32
+        custom_fwd,
+        "cuda" in get_device(),
+        cast_inputs=torch.float32,
+        device_type="cuda",
     )
     def forward(ctx, x):  # pylint: disable=arguments-differ
         ctx.save_for_backward(x)
