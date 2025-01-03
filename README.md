@@ -103,7 +103,7 @@ To install:
  ```
 * Install dependencies:
  ```shell
-  $ cd sf3d_code_release
+  $ cd stable-fast-3d
   $ pip install -r requirements.txt
  ```
 * Restart ComfyUI
