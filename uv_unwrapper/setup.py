@@ -1,7 +1,7 @@
-import torch
 import glob
 import os
 
+import torch
 from setuptools import find_packages, setup
 from torch.utils.cpp_extension import (
     BuildExtension,
@@ -26,7 +26,11 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             ("-Xclang " if is_mac else "") + "-fopenmp",
-        ] + ["-march=native"] if use_native_arch else [],
+        ]
+        + ["-march=native"]
+        if use_native_arch
+        else []
+        + ["-mmacosx-version-min=10.15"] if is_mac else [],
     }
     if debug_mode:
         extra_compile_args["cxx"].append("-g")
@@ -52,12 +56,9 @@ def get_extensions():
             define_macros=define_macros,
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
-            libraries=[
-                "c10",
-                "torch",
-                "torch_cpu",
-                "torch_python"
-            ] + ["omp"] if is_mac else [],
+            libraries=["c10", "torch", "torch_cpu", "torch_python"] + ["omp"]
+            if is_mac
+            else [],
         )
     )
 

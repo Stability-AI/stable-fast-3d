@@ -194,7 +194,7 @@ def requires_bg_remove(image, fr):
     if min_alpha == 0:
         print("Already has alpha")
         fr_res = sf3d_utils.resize_foreground(
-            image, foreground_ratio, out_size=(COND_WIDTH, COND_HEIGHT)
+            image, fr, out_size=(COND_WIDTH, COND_HEIGHT)
         )
         return (
             gr.update(value="Run", visible=True),
