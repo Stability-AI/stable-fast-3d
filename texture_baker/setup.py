@@ -33,7 +33,11 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             "-fopenmp",
-        ] + ["-march=native"] if use_native_arch else [],
+            "-c++17",
+        ]
+        + ["-march=native"]
+        if use_native_arch
+        else [],
         "nvcc": [
             "-O3" if not debug_mode else "-O0",
         ],
@@ -78,7 +82,7 @@ def get_extensions():
         sources += glob.glob(
             os.path.join(this_dir, library_name, "csrc", "**", "*.mm"), recursive=True
         )
-        extra_compile_args.update({"cxx": ["-O3", "-arch", "arm64"]})
+        extra_compile_args.update({"cxx": ["-O3", "-arch", "arm64", "-mmacosx-version-min=10.15"]})
         extra_link_args += ["-arch", "arm64"]
 
     extensions.append(

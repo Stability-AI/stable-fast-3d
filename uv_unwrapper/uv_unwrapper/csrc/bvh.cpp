@@ -6,6 +6,7 @@
 #include <iostream>
 #include <queue>
 #include <tuple>
+#include <utility>
 
 namespace UVUnwrapper {
 BVH::BVH(Triangle *tri, int *actual_idx, const size_t &num_indices) {
