@@ -33,7 +33,6 @@ def get_extensions():
             "-O3" if not debug_mode else "-O0",
             "-fdiagnostics-color=always",
             "-fopenmp",
-            "-c++17",
         ]
         + ["-march=native"]
         if use_native_arch
