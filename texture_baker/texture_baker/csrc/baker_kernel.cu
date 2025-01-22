@@ -17,6 +17,11 @@
 			throw std::runtime_error(std::string(FILE_LINE " check failed " #x " failed: ") + cudaGetErrorString(_result)); \
 	} while(0)
 
+#if defined(__HIPCC__)
+#define cudaMallocAsync hipMallocAsync
+#define cudaFreeAsync hipFreeAsync
+#endif
+
 namespace texture_baker_cpp
 {
 

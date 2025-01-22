@@ -27,6 +27,8 @@ def get_extensions():
     use_cuda = use_cuda and CUDA_HOME is not None
     extension = CUDAExtension if use_cuda else CppExtension
 
+    is_hip_extension = True if ((os.environ.get('ROCM_HOME') is not None) and (torch.version.hip is not None)) else False
+
     extra_link_args = []
     extra_compile_args = {
         "cxx": [
@@ -72,7 +74,9 @@ def get_extensions():
         sources += glob.glob(
             os.path.join(this_dir, library_name, "csrc", "**", "*.cu"), recursive=True
         )
-        libraries += ["cudart", "c10_cuda"]
+
+        if not is_hip_extension:
+            libraries += ["cudart", "c10_cuda"]
 
     if use_metal:
         define_macros += [
