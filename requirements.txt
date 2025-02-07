@@ -9,6 +9,6 @@ huggingface-hub==0.23.4
 rembg[gpu]==2.0.57; sys_platform != 'darwin'
 rembg==2.0.57; sys_platform == 'darwin'
 pynanoinstantmeshes==0.0.3
-gpytoolbox==0.2.0
+gpytoolbox==0.3.3
 ./texture_baker/
 ./uv_unwrapper/
