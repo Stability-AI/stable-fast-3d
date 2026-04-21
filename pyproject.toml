@@ -1,0 +1,14 @@
+[project]
+name = "sf3d"
+version = "0.0.1"
+description = "Stable Fast 3D: Python-only sf3d package (texture_baker and uv_unwrapper are shipped as separate subpackages)"
+requires-python = ">=3.9"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sf3d*"]
